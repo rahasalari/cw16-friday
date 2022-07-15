@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 let defaultError = true;
 let displayCourse = "none";
+
 class Form extends Component {
   constructor() {
     super();
@@ -11,23 +12,30 @@ class Form extends Component {
       errorName: "",
       errorEmail: "",
       options: [],
-      selectValue: "",
+      courseValue: "",
+      errorCourse: "",
+      personInfo: [],
     };
   }
 
   componentDidMount() {
     defaultError = false;
   }
-  validate = () => {
-    this.validateName();
-    this.validateEmail();
-  };
+
+  // Control Inputs
 
   handelChange = (e) => {
     const { name, value } = e.target;
     this.setState({ [name]: value }, this.validate);
   };
 
+  // Validate Form
+
+  validate = () => {
+    this.validateName();
+    this.validateEmail();
+    this.validateCourse();
+  };
   validateName = () => {
     const { name } = this.state;
     if (name === "") {
@@ -36,7 +44,6 @@ class Form extends Component {
       this.setState({ errorName: "" });
     }
   };
-
   validateEmail = () => {
     const { email } = this.state;
     if (email === "") {
@@ -45,12 +52,20 @@ class Form extends Component {
       this.setState({ errorEmail: "" });
     }
   };
+  validateCourse = () => {
+    const { courseValue } = this.state;
+    if (courseValue === "") {
+      this.setState({ errorCourse: "Course is required" });
+    } else {
+      this.setState({ errorCourse: "" });
+    }
+  };
 
+  // Make Options for course select
   fillOptions = (values) => {
     const arr = this.props.course[values];
-    this.setState({ selectValue: values }, () => {
-      console.log(this.state.selectValue);
-      if (this.state.selectValue === "") {
+    this.setState({ courseValue: values }, () => {
+      if (this.state.courseValue === "" || undefined) {
         displayCourse = "none";
       } else {
         displayCourse = "block";
@@ -59,13 +74,36 @@ class Form extends Component {
     });
   };
 
+  addPeople = (e) => {
+    e.preventDefault();
+    const { name, email, department, course } = e.target.elements;
+    const person = {
+      name: name.value,
+      email: email.value,
+      department: department.value,
+      course: course.value,
+    };
+    this.setState({ personInfo: [...this.state.personInfo, person] }, () =>
+      console.log(this.state.personInfo)
+    );
+  };
+
   render() {
-    const { name, email, errorName, errorEmail } = this.state;
-    const isValid = errorName === "" && errorEmail === "";
+    const {
+      name,
+      email,
+      errorName,
+      errorEmail,
+      courseValue,
+      options,
+      errorCourse,
+      personInfo,
+    } = this.state;
+    const isValid = errorName === "" && errorEmail === "" && courseValue !== "";
 
     return (
       <>
-        <form>
+        <form onSubmit={(e) => this.addPeople(e)}>
           <h1>React Form</h1>
           <hr></hr>
           <h3>Sign Up sheet</h3>
@@ -89,32 +127,45 @@ class Form extends Component {
             required
           ></input>
           <div className="error-message">{errorEmail}</div>
-          <label>Department</label>
-          <select
-            value={this.state.selectValue}
-            onInput={(e) => this.fillOptions(e.target.value)}
-            name="department"
-          >
-            <option></option>
-            {Object.keys(this.props.course).map((item) => (
-              <option>{item}</option>
-            ))}
-          </select>
+          <div>
+            <label>Department</label>
+            <select
+              onChange={this.handelChange}
+              value={courseValue}
+              onInput={(e) => this.fillOptions(e.target.value)}
+              name="department"
+            >
+              <option></option>
+              {Object.keys(this.props.course).map((item) => (
+                <option>{item}</option>
+              ))}
+            </select>
+            <div className="error-message">{errorCourse}</div>
+          </div>
           <div style={{ display: displayCourse }}>
             <label>Course</label>
-            <select name="course">
-              {this.state.options.map((item) => (
+            <select name="course" onChange={this.handelChange}>
+              {options.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
           </div>
-
           <input
             type="submit"
             value="submitForm"
             disabled={!isValid || defaultError}
           ></input>
         </form>
+        <div>
+          {personInfo.map((item) => (
+            <ul>
+              <li key={item}> {item.name} </li>
+              <li key={item}> {item.email} </li>
+              <li key={item}> {item.department} </li>
+              <li key={item}> {item.course} </li>
+            </ul>
+          ))}
+        </div>
       </>
     );
   }
